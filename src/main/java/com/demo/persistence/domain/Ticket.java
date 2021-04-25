@@ -1,9 +1,14 @@
 package com.demo.persistence.domain;
 
-public class Ticket extends NilsObject{
-    String flightId;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-    Ticket(String Id) {
-        super(Id);
-    }
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Ticket extends NilsObject{
+    @JsonProperty("flightId")
+    private String flightId;
 }
