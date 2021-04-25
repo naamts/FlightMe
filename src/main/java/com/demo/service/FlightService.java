@@ -4,8 +4,8 @@ import com.demo.persistence.FlightPersistence;
 import com.demo.persistence.domain.Destination;
 import com.demo.persistence.domain.Flight;
 import com.demo.persistence.domain.Ticket;
-import com.sun.org.slf4j.internal.Logger;
-import com.sun.org.slf4j.internal.LoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +20,7 @@ public class FlightService {
     public Boolean checkTicketValidity(Integer ticketId) {
         Ticket ticket = flightPersistence.getTicketById(ticketId);
         if (ticket == null) {
-            logger.debug("Ticket ID <" + ticketId + "> not found in the system");
+            logger.debug(String.format("Ticket ID <%d> not found in the system", ticketId));
             return false;
         }
         return true;
@@ -29,7 +29,7 @@ public class FlightService {
     public Boolean checkIn(String destinationId, String baggageId) {
         Destination destination = flightPersistence.getDestinationById(destinationId);
         if (destination == null){
-            logger.error("Invalid destination: "+ destinationId);
+            logger.error(String.format("Invalid destination: %s", destinationId));
             return false;
         }
         Flight flight = flightPersistence.getFlightByDestination(destinationId);

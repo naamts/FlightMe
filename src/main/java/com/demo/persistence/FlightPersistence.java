@@ -1,10 +1,7 @@
 package com.demo.persistence;
 
 import com.demo.persistence.domain.*;
-import com.demo.service.FlightService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sun.org.slf4j.internal.Logger;
-import com.sun.org.slf4j.internal.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -15,13 +12,13 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
 public class FlightPersistence {
 
-    private static final String BASE_PATH = "src/test/resources/";
-    private static final Logger logger = LoggerFactory.getLogger(FlightService.class);
+    private static final String BASE_PATH = "src/main/resources/";
 
     Map<String, Ticket> ticketMap;
     Map<String, Flight> flightMap;
@@ -30,7 +27,7 @@ public class FlightPersistence {
 
     public Ticket getTicketById(Integer ticketId) {
         if (CollectionUtils.isEmpty(ticketMap)) {
-            loadData("tickets", Ticket.class, ticketMap);
+            ticketMap = loadData("tickets", Ticket.class);
         }
 
         return ticketMap.get(ticketId.toString());
@@ -38,15 +35,14 @@ public class FlightPersistence {
 
     public Flight getFlightByDestination(String destinationId) {
         if (CollectionUtils.isEmpty(flightMap)) {
-            loadData("flights", Flight.class, flightMap);
+            flightMap = loadData("flights", Flight.class);
         }
 
         return flightMap.values().stream().filter(f -> f.getDestinationId().equals(destinationId)).findFirst().orElse(null);
     }
 
     public Boolean addBaggage(String baggageId, String flightId) {
-        Baggage b = Baggage.builder().flightId(flightId).suitcaseCounter(1).build();
-        b.setId(baggageId);
+        Baggage b = new Baggage(baggageId, flightId, Integer.valueOf(1));
         baggageMap.put(baggageId, b);
 
         return true;
@@ -54,29 +50,31 @@ public class FlightPersistence {
 
     public Destination getDestinationById(String destinationId) {
         if (CollectionUtils.isEmpty(destinationMap)) {
-            loadData("destinations", Destination.class, destinationMap);
+            destinationMap = loadData("destinations", Destination.class);
         }
 
         return destinationMap.get(destinationId);
     }
 
-    private <T extends NilsObject> void loadData(String path, Class<T> objectClass, Map<String, T> dataMap) {
+    private <T extends NilsObject> Map<String, T> loadData(String path, Class<T> objectClass) {
         try {
             List<Path> filePaths = Files.list(Paths.get(BASE_PATH + path)).map(Path::toAbsolutePath).collect(Collectors.toList());
-            filePaths.forEach(filePath -> readFile(filePath, objectClass, dataMap));
+            return (Map<String, T>) filePaths.stream().map(filePath -> readFile(filePath, objectClass)).collect(Collectors.toMap(NilsObject::getId, Function.identity()));
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+        return null;
     }
 
-    private <T extends NilsObject> void readFile(Path filePath, Class<T> objectClass, Map<String, T> dataMap) {
+    private <T extends NilsObject> NilsObject readFile(Path filePath, Class<T> objectClass) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             NilsObject t = objectMapper.readValue(Files.readAllBytes(filePath), objectClass);
-            dataMap.put(t.getId(), (T) t);
+            return t;
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return null;
     }
 }
